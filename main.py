@@ -6,29 +6,30 @@ import time
 
 
 #details of coin
-def fetch_price(token_name):
-
-#for searching by name, implement later, use .replace() instead.
-    #while " " in token_name:
-        #temp_name = ""
-        #c = 0
-        #for i in token_name:
-            #if i == " ":
-                #temp_name = temp_name + ('%20')
-            #else:
-                #temp_name = temp_name + i
-            #c = c + 1
-            #if c == len(token_name):
-                #token_name = temp_name
-                #break
-
+def fetch_price(token_names):
+    
+    #handles multiple tokens being requested
+    if len(token_names) > 1:
+        c = 0
+        temp_token_names = str()
+        while c != len(token_names):
+            temp_token_names = temp_token_names + token_names[c] + ","
+            c = c + 1
+        temp_token_names = temp_token_names[:-1]
+    else:
+        temp_token_names = token_names
+    
+    print(temp_token_names)
 
     params = {
-        'ids': token_name,
-        'vs_currencies' : 'usd',
+        'ids': temp_token_names,
+        'vs_currency' : 'usd',
         'include_24hr_vol': True,
-        'include_24hr_change': True
+        'precision': 2,
+        'price_change_percentage': '24h'
     }
+
+
 
     headers = {
         'x-cg-demo-api-key': config.COINGECKO_API_KEY
@@ -61,11 +62,15 @@ def fetch_price(token_name):
 if __name__ == '__main__':
     database.init_db()
     #token name input
-    token_name = input((str('please enter a valid token name: ')))
-    while token_name.isspace():
-            token_name = input((str('please enter a valid token name: ')))
-
-    results = fetch_price(token_name)
+    token_names = ['bitcoin', 'binancecoin', 'ethereum']
+    token_names = sorted(token_names)
+    for i in token_names:
+        while i.isspace():
+                print('token_name contains spaces, please edit before retrying')
+                break
+    results = dict()
+    print('token_names', token_names)
+    results = fetch_price(token_names)
 
     #retry if there are no results or error happened
     if results == None:
@@ -74,10 +79,8 @@ if __name__ == '__main__':
         while decision not in choice:
             decision = str(input('retry? Y/N'))
             if decision == 'Y' or 'y':
-                token_name = input((str('please enter a valid token name: ')))
-                results = fetch_price(token_name)
+                token_names = input((str('please enter a valid token name: ')))
+                results = fetch_price(token_names)
             else:
                 break
-    
-    print('fetched: ', results)
-    database.save_to_db(results, token_name)
+    database.save_to_db(results, token_names)
