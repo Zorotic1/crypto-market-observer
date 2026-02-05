@@ -5,7 +5,7 @@ import py_code.config as config
 def init_db():
     conn = sqlite3.connect(config.DB)
     cur = conn.cursor()
-    cur.execute('CREATE TABLE IF NOT EXISTS coins(id TEXT, usd DECIMAL, usd_vol_24hr DECIMAL, usd_change_24hr DECIMAL)')
+    cur.execute('CREATE TABLE IF NOT EXISTS coins(id TEXT, usd DECIMAL, market_cap_change_percentage_24hr DECIMAL, usd_percentage_change_24hr DECIMAL)')
 
 
 #saving data to db
@@ -13,12 +13,32 @@ def save_to_db(data, token_name):
     conn = sqlite3.connect(config.DB)
     cur = conn.cursor()
 
-    inner_data = data[token_name]
+    inner_data = list()
+    count = 0
 
-    usd = inner_data['usd']
-    usd_vol_24hr = inner_data['usd_24h_vol']
-    usd_24h_change = inner_data['usd_24h_change']
+    #loop to read all coins in list
+    for i in data:
+        
+        inner_data.append(data[count])
+        print ('coin ', count)
+        #extracts invdividual column in dict stored in list
+        tmp_data = inner_data[count]
+        usd = None
+        market_cap_change_percentage_24hr = None
+        usd_24h_change = None
+        
+        try:
+            usd = tmp_data['current_price']
+            market_cap_change_percentage_24hr = tmp_data['market_cap_change_percentage_24h']
+            usd_24h_change = tmp_data['price_change_percentage_24h']
+            #saves data into db
+            data_save = (token_name[count], usd, market_cap_change_percentage_24hr, usd_24h_change)
+            cur.execute('INSERT INTO coins(id, usd, market_cap_change_percentage_24hr, usd_percentage_change_24hr) VALUES (?, ?, ?, ?)', data_save)
+        except KeyError:
+            print(f"missing data: USD: {usd}, USD_VOL_24hr: {market_cap_change_percentage_24hr}, USD_24h_change: {usd_24h_change}", )
+        
+        #moves to the next coin
+        count = count + 1
 
-    data_save = (token_name, usd, usd_vol_24hr, usd_24h_change)
 
-    cur.execute('INSERT INTO coins(id, usd, usd_vol_24hr, usd_change_24hr) VALUES (?, ?, ?, ?)', data_save)
+    
