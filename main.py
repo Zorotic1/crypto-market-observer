@@ -54,9 +54,10 @@ def fetch_price(token_names):
             else:
                 print('Error Code:', code)
                 time.sleep(5)
-        except res == None:
+        except requests.exceptions.ConnectionError as e:
+            print('error: ', e)
             return None
-    return None
+
 
 #main
 if __name__ == '__main__':
@@ -74,11 +75,11 @@ if __name__ == '__main__':
 
     #retry if there are no results or error happened
     if results == None:
-        choice = list('Y', 'N', "y", 'n')
+        choice = ['Y', 'N', "y", 'n']
         decision = None
         while decision not in choice:
             decision = str(input('retry? Y/N'))
-            if decision == 'Y' or 'y':
+            if decision in ['Y', 'y']:
                 token_names = input((str('please enter a valid token name: ')))
                 results = fetch_price(token_names)
             else:
