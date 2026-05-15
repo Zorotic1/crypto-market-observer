@@ -1,5 +1,7 @@
 import psycopg2
 import py_code.config as config
+from psycopg2 import sql
+import re
 
 #connect to sql database
 def get_connection():
@@ -11,11 +13,11 @@ def get_connection():
     )
 
 #database setup
-def init_db():
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute('CREATE TABLE IF NOT EXISTS coins(id TEXT, usd NUMERIC, market_cap_change_percentage_24hr NUMERIC, usd_percentage_change_24hr NUMERIC)')
-    conn.commit()
+#def init_db():
+    #conn = get_connection()
+    #cur = conn.cursor()
+    #cur.execute('CREATE TABLE IF NOT EXISTS coins(id TEXT, usd NUMERIC, market_cap_change_percentage_24hr NUMERIC, usd_percentage_change_24hr NUMERIC)')
+    #conn.commit()
 
 
 #saving data to db
@@ -33,19 +35,25 @@ def save_to_db(data, token_name):
         print ('coin ', count)
         #extracts invdividual column in dict stored in list
         tmp_data = inner_data[count]
+        timestamp = None
         usd = None
         market_cap_change_percentage_24hr = None
         usd_24h_change = None
+        coin_name = re.sub('[!@#$]''', '', (str(token_name[count])))
         
         try:
+            timestamp = tmp_data['last_updated']
             usd = tmp_data['current_price']
             market_cap_change_percentage_24hr = tmp_data['market_cap_change_percentage_24h']
             usd_24h_change = tmp_data['price_change_percentage_24h']
             #saves data into db
-            data_save = (token_name[count], usd, market_cap_change_percentage_24hr, usd_24h_change)
-            cur.execute('INSERT INTO coins(id, usd, market_cap_change_percentage_24hr, usd_percentage_change_24hr) VALUES (%s, %s, %s, %s)', data_save)
+            data_save = (timestamp, usd, market_cap_change_percentage_24hr, usd_24h_change)
+            create_db = sql.SQL('CREATE TABLE IF NOT EXISTS {}(id SERIAL PRIMARY KEY, timestamp TEXT, usd NUMERIC, market_cap_change_percentage_24hr NUMERIC, usd_percentage_change_24hr NUMERIC)').format(sql.Identifier(coin_name))
+            cur.execute(create_db)
+            insert_db = sql.SQL('INSERT INTO {}(timestamp, usd, market_cap_change_percentage_24hr, usd_percentage_change_24hr) VALUES (%s, %s, %s, %s)').format(sql.Identifier((coin_name)))
+            cur.execute(insert_db, data_save)
         except KeyError:
-            print(f"missing data: USD: {usd}, USD_VOL_24hr: {market_cap_change_percentage_24hr}, USD_24h_change: {usd_24h_change}", )
+            print(f"missing data: USD: {usd}, timestamp: {timestamp}, USD_VOL_24hr: {market_cap_change_percentage_24hr}, USD_24h_change: {usd_24h_change}")
         
         #moves to the next coin
         count = count + 1

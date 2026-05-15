@@ -61,7 +61,6 @@ def fetch_price(token_names):
 
 #main
 if __name__ == '__main__':
-    database.init_db()
     #token name input
     token_names = ['bitcoin', 'binancecoin', 'ethereum']
     token_names = sorted(token_names)
