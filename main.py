@@ -9,6 +9,9 @@ import time
 def fetch_price(token_names):
     
     #handles multiple tokens being requested
+    if isinstance(token_names, str):
+        token_names = [token_names]
+    
     if len(token_names) > 1:
         c = 0
         temp_token_names = str()
@@ -17,7 +20,7 @@ def fetch_price(token_names):
             c = c + 1
         temp_token_names = temp_token_names[:-1]
     else:
-        temp_token_names = token_names
+        temp_token_names = token_names[0] if token_names else ""
     
     print(temp_token_names)
 
@@ -59,7 +62,7 @@ def fetch_price(token_names):
             return None
 
 
-#main
+#main - kept for CLI compatibility
 if __name__ == '__main__':
     #token name input
     token_names = ['bitcoin', 'binancecoin', 'ethereum']
